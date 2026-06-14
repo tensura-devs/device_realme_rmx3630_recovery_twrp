@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       dirty_clean:
-        description: "Run dirty clean before build?"
+        description: "Dirty clean output sebelum build?"
         required: true
         default: "true"
         type: choice
@@ -12,7 +12,7 @@ on:
           - "true"
           - "false"
       clone_tree:
-        description: "Clone/refresh device tree before build?"
+        description: "Clone ulang device tree sebelum build?"
         required: true
         default: "true"
         type: choice
@@ -22,15 +22,32 @@ on:
 
 jobs:
   build:
-    name: Build TWRP Recovery
+    name: Build TWRP Recovery - RMX3630
     runs-on: ubuntu-22.04
 
     steps:
       # ──────────────────────────────────────────
-      # 1. Checkout repo
+      # 1. Free up disk space (penting! runner hanya ~14GB default)
       # ──────────────────────────────────────────
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Free up disk space
+        run: |
+          echo "📦 Disk sebelum cleanup:"
+          df -h
+
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/local/share/boost \
+            "$AGENT_TOOLSDIRECTORY"
+
+          sudo apt-get clean
+          sudo docker image prune --all --force 2>/dev/null || true
+
+          echo ""
+          echo "📦 Disk setelah cleanup:"
+          df -h
 
       # ──────────────────────────────────────────
       # 2. Install build dependencies
@@ -40,92 +57,126 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y \
             git-core gnupg flex bison build-essential zip curl \
-            zlib1g-dev libc6-dev-i386 x11proto-core-dev \
+            zlib1g-dev libc6-dev-i386 \
             libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils \
-            xsltproc unzip fontconfig ccache python3 python3-pip \
-            openjdk-11-jdk
+            xsltproc unzip fontconfig ccache \
+            python3 python3-pip \
+            openjdk-11-jdk \
+            repo
 
       # ──────────────────────────────────────────
-      # 3. Setup ccache
-      # ──────────────────────────────────────────
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 100G
-          key: twrp-rmx3630-${{ github.sha }}
-          restore-keys: twrp-rmx3630-
-
-      # ──────────────────────────────────────────
-      # 4. Configure Git
+      # 3. Configure Git
       # ──────────────────────────────────────────
       - name: Configure Git
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
+          git config --global color.ui false
 
       # ──────────────────────────────────────────
-      # 5. Cache TWRP source
+      # 4. Setup ccache
       # ──────────────────────────────────────────
-      - name: Cache TWRP source
-        uses: actions/cache@v4
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          path: ~/twrp-build
-          key: twrp-source-${{ hashFiles('**/twrp_manifest.xml') }}
-          restore-keys: twrp-source-
+          max-size: 8G
+          key: twrp-rmx3630
+          restore-keys: twrp-rmx3630
 
       # ──────────────────────────────────────────
-      # 6. Dirty clean output (optional)
+      # 5. Setup repo tool
+      # ──────────────────────────────────────────
+      - name: Setup repo tool
+        run: |
+          mkdir -p ~/.bin
+          curl -s https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
+          chmod a+x ~/.bin/repo
+          echo "$HOME/.bin" >> $GITHUB_PATH
+
+      # ──────────────────────────────────────────
+      # 6. Sync TWRP source (minimal, depth=1)
+      # ──────────────────────────────────────────
+      - name: Sync TWRP source
+        run: |
+          mkdir -p ~/twrp-build
+          cd ~/twrp-build
+
+          echo "🔄 Initializing repo manifest..."
+          ~/.bin/repo init \
+            -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git \
+            -b twrp-12.1 \
+            --depth=1 \
+            --no-clone-bundle
+
+          echo "🔄 Syncing source (ini butuh waktu ~20-40 menit)..."
+          ~/.bin/repo sync \
+            -j$(nproc) \
+            --force-sync \
+            --no-clone-bundle \
+            --no-tags \
+            --current-branch \
+            -q
+
+          echo ""
+          echo "📦 Disk setelah repo sync:"
+          df -h
+
+      # ──────────────────────────────────────────
+      # 7. Dirty clean output (optional)
       # ──────────────────────────────────────────
       - name: Dirty clean output
         if: ${{ github.event.inputs.dirty_clean == 'true' }}
         run: |
-          echo "Melakukan dirty clean out ..."
+          echo "🧹 Melakukan dirty clean out..."
           rm -rf \
             ~/twrp-build/out/target/product/RMX3630/vendor_boot.img \
             ~/twrp-build/out/target/product/RMX3630/vendor_ramdisk \
             ~/twrp-build/out/target/product/RMX3630/root \
             ~/twrp-build/out/target/product/RMX3630/recovery \
             ~/twrp-build/out/target/product/RMX3630/ramdisk
-          echo "✅ Dirty clean out successfully"
+          echo "✅ Dirty clean selesai"
 
       # ──────────────────────────────────────────
-      # 7. Clone / refresh device tree (optional)
+      # 8. Clone device tree (optional)
       # ──────────────────────────────────────────
       - name: Clone device tree
         if: ${{ github.event.inputs.clone_tree == 'true' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.DEVICE_TREE_TOKEN }}
-        working-directory: ${{ github.workspace }}
+          DEVICE_TREE_TOKEN: ${{ secrets.DEVICE_TREE_TOKEN }}
         run: |
-          echo "Menghapus source tree lama..."
-          rm -rf device/realme/RMX3630
-          echo "✅ Source Tree deleted successfully"
+          cd ~/twrp-build
 
-          echo "Menambahkan source tree baru..."
+          echo "🗑️  Menghapus source tree lama..."
+          rm -rf device/realme/RMX3630
+          echo "✅ Source tree lama dihapus"
+
+          echo "📥 Mengkloning source tree baru..."
           git clone \
-            -b twrp-12.1 \
-            "https://github.com/tensura-devs/device_realme_rmx3630_recovery_twrp.git" \
+            --depth=1 \
+            -b twrp-12.1-twrpdt \
+            "https://${DEVICE_TREE_TOKEN}@github.com/tensura-devs/device_realme_tensura_recovery.git" \
             device/realme/RMX3630
-          echo "✅ Source Tree Added successfully"
+          echo "✅ Source tree baru berhasil di-clone"
 
       # ──────────────────────────────────────────
-      # 8. Setup build environment & build
+      # 9. Build TWRP vendorbootimage
       # ──────────────────────────────────────────
       - name: Build TWRP vendorbootimage
-        working-directory: ${{ github.workspace }}
         run: |
+          cd ~/twrp-build
+
           echo "=========================================="
-          echo "        TWRP BUILD SCRIPT FOR RMX3630     "
+          echo "        TWRP BUILD SCRIPT FOR RMX3630    "
           echo "=========================================="
 
-          # Environment variables
+          # Setup environment
           export LC_ALL=C
           export USE_CCACHE=1
-          ccache -M 100G
           export CCACHE_COMPRESS=1
-          export CCACHE_DIR=/root/.ccache
-          export PARALLEL_JOBS=4
+          export CCACHE_DIR=$HOME/.ccache
+          export ALLOW_MISSING_DEPENDENCIES=true
 
+          ccache -M 8G
           echo "✅ Environment configured"
 
           # Init build environment
@@ -136,33 +187,40 @@ jobs:
           lunch twrp_RMX3630-eng
           echo "✅ Lunch target: twrp_RMX3630-eng"
 
+          echo ""
           echo "=========================================="
-          echo "🚀 STARTING BUILD PROCESS..."
-          echo "Build target : vendorbootimage"
-          echo "Parallel jobs: 16"
-          echo "Timestamp    : $(date)"
+          echo "🚀 STARTING BUILD..."
+          echo "Target    : vendorbootimage"
+          echo "Jobs      : $(nproc)"
+          echo "Timestamp : $(date)"
           echo "=========================================="
 
-          time mka vendorbootimage -j16
+          time mka vendorbootimage -j$(nproc)
 
+          echo ""
           echo "=========================================="
-          echo "✅ VENDOR_BOOT RECOVERY CREATED SUCCESSFULLY!"
-          echo "Build finished at: $(date)"
+          echo "✅ BUILD SELESAI!"
+          echo "Finished  : $(date)"
+          echo "Output    : out/target/product/RMX3630/"
           echo "=========================================="
+
+          echo "📦 Disk setelah build:"
+          df -h
 
       # ──────────────────────────────────────────
-      # 9. Upload artifact
+      # 10. Upload vendor_boot.img sebagai artifact
       # ──────────────────────────────────────────
       - name: Upload vendor_boot.img
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: twrp-vendor_boot-RMX3630-${{ github.run_number }}
           path: ~/twrp-build/out/target/product/RMX3630/vendor_boot.img
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn
 
       # ──────────────────────────────────────────
-      # 10. Create GitHub Release (on tag push)
+      # 11. Create GitHub Release (hanya saat push tag)
       # ──────────────────────────────────────────
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -172,9 +230,10 @@ jobs:
           name: "TWRP RMX3630 - ${{ github.ref_name }}"
           body: |
             ## TWRP Recovery for Realme RMX3630
-            - Branch: `twrp-12.1-twrpdt`
-            - Build: `twrp_RMX3630-eng`
-            - Target: `vendorbootimage`
-            - Built at: ${{ github.run_id }}
+            - Branch device tree : `twrp-12.1-twrpdt`
+            - Build target       : `twrp_RMX3630-eng`
+            - Output             : `vendorbootimage`
+            - Run ID             : ${{ github.run_id }}
+            - Built at           : ${{ github.event.repository.updated_at }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

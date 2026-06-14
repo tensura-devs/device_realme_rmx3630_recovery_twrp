@@ -95,7 +95,7 @@ jobs:
         if: ${{ github.event.inputs.clone_tree == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.DEVICE_TREE_TOKEN }}
-        working-directory: ~/twrp-build
+        working-directory: ${{ github.workspace }}
         run: |
           echo "Menghapus source tree lama..."
           rm -rf device/realme/RMX3630
@@ -112,7 +112,7 @@ jobs:
       # 8. Setup build environment & build
       # ──────────────────────────────────────────
       - name: Build TWRP vendorbootimage
-        working-directory: ~/twrp-build
+        working-directory: ${{ github.workspace }}
         run: |
           echo "=========================================="
           echo "        TWRP BUILD SCRIPT FOR RMX3630     "

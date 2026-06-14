@@ -103,8 +103,8 @@ jobs:
 
           echo "Menambahkan source tree baru..."
           git clone \
-            -b twrp-12.1-twrpdt \
-            "https://${GITHUB_TOKEN}@github.com/tensura-devs/device_realme_tensura_recovery.git" \
+            -b twrp-12.1 \
+            "https://github.com/tensura-devs/device_realme_rmx3630_recovery_twrp.git" \
             device/realme/RMX3630
           echo "✅ Source Tree Added successfully"
 

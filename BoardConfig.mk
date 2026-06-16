@@ -123,6 +123,9 @@ BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_VENDOR_DLKMIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
 TARGET_USERIMAGES_USE_EXT4 := true
+TARGET_USERIMAGES_USE_F2FS := true
+BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
+TARGET_F2FS_ARGUMENTS := -O encrypt,extra_attr,inode_checksum,sb_checksum,compression,flexible_inline_xattr
 
 BOARD_AVB_VBMETA_SYSTEM := system
 BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := external/avb/test/data/testkey_rsa2048.pem
@@ -148,11 +151,6 @@ TARGET_COPY_OUT_SYSTEM := system
 TARGET_COPY_OUT_SYSTEM_EXT := system_ext
 TARGET_COPY_OUT_VENDOR := vendor
 TARGET_COPY_OUT_VENDOR_DLKM := vendor_dlkm
-
-# F2FS support
-TARGET_USERIMAGES_USE_F2FS := true
-BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
-TARGET_F2FS_ARGUMENTS := -O encrypt,extra_attr,inode_checksum,sb_checksum,compression,flexible_inline_xattr
 
 # A/B OTA
 AB_OTA_UPDATER := true

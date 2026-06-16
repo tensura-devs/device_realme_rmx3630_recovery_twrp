@@ -180,12 +180,8 @@ TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/recovery/root/system/etc/recovery.fstab
 # Crypto
 TW_INCLUDE_CRYPTO := true
 TW_INCLUDE_CRYPTO_FBE := true
-TW_INCLUDE_FBE_METADATA_DECRYPT := true
-TW_FORCE_KEYMASTER_VER := true
 TW_USE_FSCRYPT_POLICY := 2
-TW_CRYPTO_USE_SYSTEM_VOLD := true
-TW_CRYPTO_SYSTEM_VOLD_MOUNT := vendor
-TW_CRYPTO_SYSTEM_VOLD_SERVICES := keymaster gatekeeperd
+TW_FORCE_KEYMASTER_VER := true
 
 # Hack
 PLATFORM_SECURITY_PATCH := 2099-12-31
@@ -230,6 +226,9 @@ TW_CUSTOM_CPU_TEMP_PATH := /sys/class/thermal/thermal_zone28/temp
 TW_OVERRIDE_SYSTEM_PROPS := "ro.build.version.sdk"
 TW_SUPPORT_INPUT_AIDL_HAPTICS := true
 TW_SKIP_ADDITIONAL_FSTAB := true
+
+# Hack depends
+ALLOW_MISSING_DEPENDENCIES := true
 
 # Debug
 TARGET_USES_LOGD := true

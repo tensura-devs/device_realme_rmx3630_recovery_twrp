@@ -166,21 +166,6 @@ TW_INCLUDE_REPACKTOOLS := true
 TW_INCLUDE_RESETPROP := true
 TW_INCLUDE_LPTOOLS := true
 
-# A/B OTA
-AB_OTA_UPDATER := true
-AB_OTA_PARTITIONS := \
-    boot \
-    vendor_boot \
-    system \
-    vendor \
-    product \
-    system_ext \
-    odm \
-    dtbo \
-    vbmeta \
-    vbmeta_system \
-    vbmeta_vendor
-
 # TWRP Configuration
 TW_DEFAULT_BRIGHTNESS := 1024
 TW_DEFAULT_LANGUAGE := en

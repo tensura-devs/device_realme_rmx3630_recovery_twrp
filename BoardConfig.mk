@@ -55,8 +55,6 @@ TARGET_RECOVERY_DEVICE_MODULES += \
     vold \
     libcommon_dcs_service
 
-RECOVERY_BINARY_SOURCE_FILES += $(TARGET_OUT)/bin/vold
-
 RECOVERY_LIBRARY_SOURCE_FILES += \
     $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)/android.hardware.boot@1.2-mtkimpl.so \
     $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster4support.so \

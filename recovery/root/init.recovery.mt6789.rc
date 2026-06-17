@@ -67,6 +67,16 @@ on post-fs-data
     start health-hal-2-1
     setprop sys.usb.config adb
 
+service vold /vendor/bin/hw/vold \
+        --blkid_context=u:r:blkid:s0 --blkid_untrusted_context=u:r:blkid_untrusted:s0 \
+        --fsck_context=u:r:fsck:s0 --fsck_untrusted_context=u:r:fsck_untrusted:s0
+    class core
+    ioprio be 2
+    writepid /dev/cpuset/foreground/tasks
+    shutdown critical
+    group root wait_for_keymaster reserved_disk
+    seclabel u:r:recovery:s0
+
 service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
     class main
     user root

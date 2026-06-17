@@ -52,6 +52,7 @@ TARGET_RECOVERY_DEVICE_MODULES += \
     libpuresoftkeymasterdevice \
     android.hardware.keymaster@4.0 \
     android.hardware.keymaster@4.1 \
+    vold
 
 RECOVERY_LIBRARY_SOURCE_FILES += \
     $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)/android.hardware.boot@1.2-mtkimpl.so \

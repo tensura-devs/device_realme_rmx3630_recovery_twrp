@@ -182,6 +182,7 @@ TW_MAX_BRIGHTNESS := 4095
 TW_LOAD_VENDOR_BOOT_MODULES := true
 TW_NO_SCREEN_BLANK := true
 TW_SKIP_ADDITIONAL_FSTAB := true
+TW_CUSTOM_CPU_TEMP_PATH := /sys/class/thermal/thermal_zone28/temp
 
 # StatusBar
 TW_STATUS_ICONS_ALIGN := center

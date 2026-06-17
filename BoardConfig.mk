@@ -61,7 +61,7 @@ RECOVERY_LIBRARY_SOURCE_FILES += \
     $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)/android.hardware.boot@1.2-mtkimpl.so \
     $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster4support.so \
     $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster4_1support.so \
-    $(TARGET_OUT_SHARED_LIBRARIES)/libpuresoftkeymasterdevice.so
+    $(TARGET_OUT_SHARED_LIBRARIES)/libpuresoftkeymasterdevice.so \
     $(TARGET_OUT_SYSTEM_EXT_SHARED_LIBRARIES)/libcommon_dcs_service.so
 
 # Kernel
